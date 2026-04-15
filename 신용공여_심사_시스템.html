@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>신용공여 심사 시스템</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #f4fbff;
+  --bg2: #ffffff;
+  --bg3: #edf9ff;
+  --bg4: #d9f0fb;
+  --border: rgba(15, 72, 98, 0.09);
+  --border2: rgba(15, 72, 98, 0.16);
+  --text: #163247;
+  --text2: #5a7a90;
+  --text3: #8aa5b8;
+  --blue: #35c7cf;
+  --blue-dim: rgba(53, 199, 207, 0.14);
+  --blue-bg: rgba(53, 199, 207, 0.08);
+  --green: #3ecf9c;
+  --green-dim: rgba(62, 207, 156, 0.12);
+  --amber: #ffb86b;
+  --amber-dim: rgba(255, 184, 107, 0.16);
+  --red: #f27e93;
+  --red-dim: rgba(242, 126, 147, 0.14);
+  --accent: #35c7cf;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: linear-gradient(180deg, #f7fdff 0%, #eef8ff 100%);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── 레이아웃 ── */
+.app { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .brand {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--blue);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.sidebar-logo .sub {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 3px;
+}
+
+.nav { padding: 12px 10px; flex: 1; }
+.nav-label {
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 8px 10px 4px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 400;
+  transition: all .15s;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--blue-dim); color: var(--blue); font-weight: 500; }
+.nav-icon { font-size: 15px; width: 18px; text-align: center; }
+
+.sidebar-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 32px;
+  max-width: 1200px;
+}
+
+/* ── 공통 컴포넌트 ── */
+.page { display: none; }
+.page.active { display: block; }
+
+.page-header { margin-bottom: 24px; }
+.page-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.page-desc { font-size: 13px; color: var(--text2); }
+
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 16px; }
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 12px; }
+
+/* ── 입력 ── */
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 11px; color: var(--text2); font-weight: 500; }
+.field input,
+.field select,
+.field textarea {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 13px;
+  font-family: 'Noto Sans KR', sans-serif;
+  padding: 0 12px;
+  height: 36px;
+  transition: border-color .15s;
+  outline: none;
+}
+.field input:focus,
+.field select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(75,142,245,.1); }
+.field input[readonly] { color: var(--text2); cursor: default; }
+.field textarea { height: auto; padding: 8px 12px; resize: vertical; min-height: 60px; }
+.field select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238b91a3'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+/* ── 버튼 ── */
+.btn {
+  height: 36px;
+  padding: 0 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  border: none;
+  transition: all .15s;
+}
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-primary:hover { background: #2cb4bc; }
+.btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--text2); }
+.btn-ghost:hover { background: var(--bg3); color: var(--text); }
+.btn-full { width: 100%; height: 40px; font-size: 14px; }
+
+/* ── 지표 카드 ── */
+.metric {
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+.metric-label { font-size: 11px; color: var(--text2); margin-bottom: 5px; }
+.metric-value { font-size: 20px; font-weight: 700; color: var(--text); font-family: 'DM Mono', monospace; }
+.metric-sub { font-size: 10px; color: var(--text3); margin-top: 3px; }
+
+/* ── 배지 ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.badge-blue { background: var(--blue-dim); color: var(--blue); }
+.badge-green { background: var(--green-dim); color: var(--green); }
+.badge-amber { background: var(--amber-dim); color: var(--amber); }
+.badge-red { background: var(--red-dim); color: var(--red); }
+
+/* ── 판정 배지 ── */
+.verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.verdict-approve { background: var(--green-dim); color: var(--green); }
+.verdict-partial { background: var(--amber-dim); color: var(--amber); }
+.verdict-reject { background: var(--red-dim); color: var(--red); }
+
+/* ── 게이지 바 ── */
+.gauge-wrap { margin: 12px 0; }
+.gauge-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); margin-bottom: 6px; }
+.gauge-bg { height: 8px; background: var(--bg4); border-radius: 999px; overflow: hidden; }
+.gauge-fill { height: 100%; border-radius: 999px; transition: width .6s; }
+
+/* ── 미니 바 ── */
+.mini-bar-bg { height: 5px; width: 72px; background: var(--bg4); border-radius: 999px; overflow: hidden; display: inline-block; vertical-align: middle; }
+.mini-bar-fill { height: 100%; border-radius: 999px; }
+
+/* ── 팩터 행 ── */
+.factor-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.factor-row:last-child { border-bottom: none; }
+
+/* ── 테이블 ── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+.data-table td { padding: 8px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--bg3); }
+.data-table th.r, .data-table td.r { text-align: right; }
+
+/* ── 탭 (페이지 내 서브탭 아님, 페이지 내 섹션 구분용) ── */
+.sort-row { display: flex; gap: 6px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
+.sort-btn {
+  font-size: 11px;
+  padding: 3px 10px;
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all .12s;
+}
+.sort-btn.active { background: var(--blue-dim); color: var(--blue); border-color: var(--blue); }
+
+/* ── 보유잔고 토글 ── */
+.hold-toggle-row {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 10px;
+}
+.hold-toggle-btn {
+  font-size: 12px;
+  padding: 6px 12px;
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all .12s;
+}
+.hold-toggle-btn.active { background: var(--blue-dim); color: var(--blue); border-color: var(--blue); }
+
+/* ── 신청 종목 선택 ── */
+.stock-pick-wrap {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+}
+.stock-custom-wrap {
+  margin-top: 10px;
+}
+
+/* ── 히스토리 아이템 ── */
+.hist-item {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ── 배너 ── */
+.banner {
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  border: 1px solid;
+}
+.banner-green { background: rgba(63,203,122,.07); border-color: rgba(63,203,122,.2); }
+.banner-amber { background: rgba(245,166,35,.07); border-color: rgba(245,166,35,.2); }
+.banner-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.banner-sub { font-size: 11px; }
+.banner-green .banner-title { color: var(--green); }
+.banner-green .banner-sub { color: rgba(63,203,122,.7); }
+.banner-amber .banner-title { color: var(--amber); }
+.banner-amber .banner-sub { color: rgba(245,166,35,.7); }
+
+/* ── 프로필 인라인 ── */
+.profile-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--blue-dim);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px; color: var(--blue);
+  flex-shrink: 0;
+}
+
+/* ── 금리 패널 ── */
+.rate-panel { background: var(--bg3); border-radius: var(--radius-sm); padding: 14px 16px; }
+.rate-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 12px; color: var(--text2); }
+.rate-total { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 0; margin-top: 8px; border-top: 1px solid var(--border); }
+
+/* ── 섹션 구분선 ── */
+.divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+.section-label {
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+/* ── 로딩 ── */
+.loading { display: flex; gap: 5px; justify-content: center; padding: 20px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); animation: pu 1.2s infinite; }
+.dot:nth-child(2) { animation-delay: .2s; }
+.dot:nth-child(3) { animation-delay: .4s; }
+@keyframes pu { 0%,80%,100%{opacity:.25;transform:scale(.7)} 40%{opacity:1;transform:scale(1)} }
+
+/* ── 스크롤바 ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+
+.hidden { display: none !important; }
+.mono { font-family: 'DM Mono', monospace; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 사이드바 -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">CreditSys</div>
+      <div class="sub">신용공여 심사 시스템</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">심사</div>
+      <div class="nav-item active" onclick="goPage('screening', this)">
+        <span class="nav-icon">🔍</span> 신용공여 심사
+      </div>
+      <div class="nav-item" onclick="goPage('maturity', this)">
+        <span class="nav-icon">⏳</span> 만기연장 심사
+      </div>
+      <div class="nav-item" onclick="goPage('rateReq', this)">
+        <span class="nav-icon">💬</span> 협의금리 신청
+      </div>
+      <div class="nav-label" style="margin-top:8px;">한도 관리</div>
+      <div class="nav-item" onclick="goPage('limit', this)">
+        <span class="nav-icon">⬆</span> 종목심사 신청
+      </div>
+      <div class="nav-item" onclick="goPage('remain', this)">
+        <span class="nav-icon">📊</span> 잔여한도 현황
+      </div>
+      <div class="nav-label" style="margin-top:8px;">환경설정</div>
+      <div class="nav-item" onclick="goPage('settings', this)">
+        <span class="nav-icon">⚙️</span> 설정
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      고객 데이터 20인 연동<br>
+      CD91: 3.50% · 기준금리: 3.00%
+    </div>
+  </aside>
+
+  <!-- 메인 -->
+  <main class="main">
+
+    <!-- ===================== PAGE: 신용공여 심사 ===================== -->
+    <div id="page-screening" class="page active">
+      <div class="page-header">
+        <div class="page-title">신용공여 심사</div>
+        <div class="page-desc">고객번호를 조회하여 대출 가능 여부 및 협의금리를 산출합니다.</div>
+      </div>
+
+      <!-- 고객 조회 -->
+      <div class="card">
+        <div class="card-title">고객 조회</div>
+        <div class="field" style="margin-bottom:10px;">
+          <label>고객번호</label>
+          <select id="s-custSel" onchange="s_loadCust()">
+            <option value="">고객 선택...</option>
+          </select>
+        </div>
+        <div id="s-profInline" class="hidden profile-inline" style="margin-bottom:10px;">
+          <div class="avatar" id="s-ava"></div>
+          <div>
+            <div id="s-pName" style="font-weight:600;font-size:13px;"></div>
+            <div id="s-pMeta" style="font-size:11px;color:var(--text2);"></div>
+          </div>
+        </div>
+        <div id="s-custSummary" class="hidden">
+          <div class="grid3">
+            <div class="metric"><div class="metric-label">순자산</div><div class="metric-value" id="s-asset">-</div></div>
+            <div class="metric"><div class="metric-label">기존 신용공여 잔액</div><div class="metric-value" id="s-loan" style="color:var(--blue);">-</div></div>
+            <div class="metric"><div class="metric-label">레버리지 비율</div><div class="metric-value" id="s-lev">-</div></div>
+          </div>
+          <div id="s-holdWrap" class="hidden" style="margin-top:12px;">
+            <div class="section-label" style="margin-bottom:8px;">고객 보유 잔고</div>
+            <div class="hold-toggle-row">
+              <button id="s-btnCash" class="hold-toggle-btn active" onclick="s_switchHoldType('cash', this)">현금주식잔고</button>
+              <button id="s-btnCredit" class="hold-toggle-btn" onclick="s_switchHoldType('credit', this)">신용공여잔고</button>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>종목명</th>
+                    <th class="r">보유수량</th>
+                    <th class="r">평균단가</th>
+                    <th class="r">평가금액</th>
+                    <th class="r">수익률</th>
+                    <th>심사여부</th>
+                  </tr>
+                </thead>
+                <tbody id="s-holdBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 심사 입력 -->
+      <div class="card" id="s-inputCard" style="display:none;">
+        <div class="card-title">신청 정보 입력</div>
+        <div class="field" style="margin-bottom:12px;">
+          <label>신청 종목명</label>
+          <div class="stock-pick-wrap">
+            <select id="s-stockSel" onchange="s_onStockSelectionChange()">
+              <option value="">종목 선택...</option>
+            </select>
+            <div class="stock-custom-wrap hidden" id="s-stockCustomWrap">
+              <input type="text" id="s-stockCustom" placeholder="종목명을 직접 입력하세요" disabled oninput="s_onCustomStockInput()" />
+            </div>
+            <div id="s-stockWarn" class="hidden" style="margin-top:8px;font-size:11px;color:var(--red);">해당 종목은 심사불가능으로 신청할 수 없습니다.</div>
+          </div>
+          <input type="hidden" id="s-stock" />
+        </div>
+        <div class="grid2">
+          <div class="field"><label>신청 금액 (원)</label><input type="number" id="s-amt" placeholder="예: 50000000" /></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <button id="s-runBtn" class="btn btn-primary" style="flex:1;height:40px;" onclick="s_run()">심사 실행</button>
+          <button class="btn btn-ghost" onclick="s_reset()">초기화</button>
+        </div>
+        <div id="s-loading" class="loading hidden"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      </div>
+
+      <!-- 심사 결과 -->
+      <div class="card hidden" id="s-resultCard">
+        <div class="card-title">심사 결과</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);">
+          <div id="s-vPill" class="verdict"></div>
+          <span id="s-vSub" style="font-size:13px;color:var(--text2);"></span>
+        </div>
+        <div class="grid4" style="margin-bottom:16px;">
+          <div class="metric"><div class="metric-label">신청 금액</div><div class="metric-value" id="s-rReq" style="font-size:16px;">-</div></div>
+          <div class="metric"><div class="metric-label">승인 금액</div><div class="metric-value" id="s-rApp" style="font-size:16px;color:var(--green);">-</div></div>
+          <div class="metric"><div class="metric-label">최대 가능 금액</div><div class="metric-value" id="s-rMax" style="font-size:16px;color:var(--blue);">-</div></div>
+          <div class="metric"><div class="metric-label">최종 협의금리</div><div class="metric-value" id="s-rRate" style="font-size:16px;color:var(--blue);">-</div></div>
+        </div>
+
+        <!-- 한도 구성 바 -->
+        <div style="margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:5px;"><span>한도 구성</span><span id="s-barLbl"></span></div>
+          <div style="display:flex;height:8px;border-radius:999px;overflow:hidden;gap:2px;" id="s-limitBar"></div>
+          <div style="display:flex;gap:14px;margin-top:5px;font-size:10px;">
+            <span style="color:var(--green);">■ 승인</span>
+            <span style="color:var(--blue);">■ 조건부</span>
+            <span style="color:var(--red);">■ 불가</span>
+          </div>
+        </div>
+
+        <!-- 종합 점수 -->
+        <div style="margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:5px;"><span>종합 심사 점수</span><span id="s-score" class="mono"></span></div>
+          <div class="gauge-bg"><div class="gauge-fill" id="s-scoreBar" style="width:0%;"></div></div>
+        </div>
+
+        <div class="grid2" style="gap:20px;">
+          <div>
+            <div class="section-label">심사 요인 분석</div>
+            <div id="s-factors"></div>
+          </div>
+          <div>
+            <div class="section-label">협의금리 산출</div>
+            <div class="rate-panel">
+              <div class="rate-row"><span>기준금리 (CD91일물)</span><span id="r-base" class="mono">-</span></div>
+              <div class="rate-row"><span>기본 가산금리</span><span id="r-spread" class="mono">-</span></div>
+              <div class="rate-row" id="r-premRow"><span>우수고객 우대</span><span id="r-prem" class="mono" style="color:var(--green);">-</span></div>
+              <div class="rate-row" id="r-riskRow"><span>리스크 가산</span><span id="r-risk" class="mono" style="color:var(--amber);">-</span></div>
+              <div class="rate-row" id="r-levRow"><span>레버리지 가산</span><span id="r-lev" class="mono" style="color:var(--amber);">-</span></div>
+              <div class="rate-total">
+                <span style="font-size:13px;font-weight:600;">최종 협의금리</span>
+                <span class="mono" id="r-final" style="font-size:20px;font-weight:700;color:var(--blue);">-</span>
+              </div>
+            </div>
+            <div style="margin-top:16px;">
+              <div class="section-label">심사 의견</div>
+              <div id="s-reasons"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== PAGE: 한도상향 ===================== -->
+    <div id="page-limit" class="page">
+      <div class="page-header">
+        <div class="page-title">종목심사 신청</div>
+        <div class="page-desc">잔여한도 현황의 전체 종목 중 하나를 선택해 종목심사를 신청합니다.</div>
+      </div>
+
+      <!-- 종목심사 신청 -->
+      <div class="card" id="l-formCard">
+        <div class="card-title">종목심사 신청</div>
+        <div class="grid4" style="margin-bottom:10px;">
+          <div class="field"><label>종목명</label>
+            <input type="text" id="f-stock" list="f-stockList" placeholder="종목명 입력 또는 선택" oninput="f_onStockChange()" />
+            <datalist id="f-stockList"></datalist>
+          </div>
+          <div class="field"><label>현재 종목 한도 (억)</label><input type="number" id="f-cur" readonly /></div>
+          <div class="field"><label>사용 한도 (억)</label><input type="number" id="f-used" readonly /></div>
+          <div class="field"><label>잔여 한도 (억)</label><input type="number" id="f-rem" readonly /></div>
+        </div>
+        <div class="grid3">
+          <div class="field"><label>신청 한도 (억)</label><input type="number" id="f-new" placeholder="예: 15" step="0.1" /></div>
+          <div class="field"><label>신청 사유</label>
+            <select id="f-reason">
+              <option>고객 수요 증가</option><option>종목 리스크 개선</option>
+              <option>신규 우량 고객 유치</option><option>시장 상황 변화</option><option>기타</option>
+            </select>
+          </div>
+          <div class="field"><label>비고</label><textarea id="f-note" placeholder="추가 의견..."></textarea></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <button class="btn btn-primary" style="flex:1;" onclick="f_submit()">종목심사 신청</button>
+          <button class="btn btn-ghost" onclick="f_clear()">초기화</button>
+        </div>
+      </div>
+
+      <div class="card hidden" id="l-histCard">
+        <div class="card-title">종목심사 신청 내역</div>
+        <div id="l-histList"></div>
+      </div>
+    </div>
+
+    <!-- ===================== PAGE: 만기연장 심사 ===================== -->
+    <div id="page-maturity" class="page">
+      <div class="page-header">
+        <div class="page-title">만기연장 심사</div>
+        <div class="page-desc">만기연장 요청 건에 대한 심사를 등록하고 관리합니다.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">만기연장 심사 신청</div>
+        <div class="grid2">
+          <div class="field"><label>고객번호</label><input type="text" placeholder="예: 고객_01" /></div>
+          <div class="field"><label>대상 종목명</label><input type="text" placeholder="예: 삼성전자" /></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>현재 만기일</label><input type="date" /></div>
+          <div class="field"><label>요청 만기일</label><input type="date" /></div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-primary">만기연장 심사 신청</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== PAGE: 협의금리 신청 ===================== -->
+    <div id="page-rateReq" class="page">
+      <div class="page-header">
+        <div class="page-title">협의금리 신청</div>
+        <div class="page-desc">협의금리 조정 요청을 등록하고 검토합니다.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">협의금리 신청</div>
+        <div class="grid2">
+          <div class="field"><label>고객번호</label><input type="text" placeholder="예: 고객_01" /></div>
+          <div class="field"><label>대상 종목명</label><input type="text" placeholder="예: 현대차" /></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>현재 적용 금리 (%)</label><input type="number" step="0.01" placeholder="예: 5.20" /></div>
+          <div class="field"><label>요청 금리 (%)</label><input type="number" step="0.01" placeholder="예: 4.80" /></div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-primary">협의금리 신청</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== PAGE: 잔여한도 ===================== -->
+    <div id="page-remain" class="page">
+      <div class="page-header">
+        <div class="page-title">잔여한도 현황</div>
+        <div class="page-desc">회사 전체 및 종목별 신용공여 한도 소진 현황을 확인합니다.</div>
+      </div>
+
+      <!-- 전체 현황 -->
+      <div class="card">
+        <div class="card-title">회사 전체 신용공여 한도</div>
+        <div class="grid4" style="margin-bottom:14px;">
+          <div class="metric"><div class="metric-label">총 한도</div><div class="metric-value" id="r-tLim">-</div><div class="metric-sub">설정 기준</div></div>
+          <div class="metric"><div class="metric-label">사용 한도</div><div class="metric-value" id="r-tUsed" style="color:var(--blue);">-</div><div class="metric-sub">현재 집행액</div></div>
+          <div class="metric"><div class="metric-label">잔여 한도</div><div class="metric-value" id="r-tRem" style="color:var(--green);">-</div><div class="metric-sub">신규 집행 가능</div></div>
+          <div class="metric"><div class="metric-label">소진율</div><div class="metric-value" id="r-tRate">-</div><div class="metric-sub">사용/총한도</div></div>
+        </div>
+        <div class="gauge-wrap">
+          <div class="gauge-labels"><span>한도 소진 현황</span><span id="r-gLbl">-</span></div>
+          <div class="gauge-bg"><div class="gauge-fill" id="r-gFill" style="width:0%;"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px;"><span>0</span><span id="r-gMax">-</span></div>
+        </div>
+        <hr class="divider" style="margin:16px 0 14px;" />
+        <div class="section-label">전체 잔여한도 요약</div>
+        <div class="grid4">
+          <div class="metric"><div class="metric-label">운용 종목 수</div><div class="metric-value" id="r-stk">-</div><div class="metric-sub">신용공여 운용 중</div></div>
+          <div class="metric"><div class="metric-label">총 사용액</div><div class="metric-value" id="r-usd" style="color:var(--blue);">-</div><div class="metric-sub">억원</div></div>
+          <div class="metric"><div class="metric-label">총 잔여한도</div><div class="metric-value" id="r-rm" style="color:var(--green);">-</div><div class="metric-sub">억원</div></div>
+          <div class="metric"><div class="metric-label">한도 여유 종목</div><div class="metric-value" id="r-safe" style="color:var(--green);">-</div><div class="metric-sub">소진율 50% 미만</div></div>
+        </div>
+      </div>
+
+      <!-- 종목별 테이블 -->
+      <div class="card">
+        <div class="card-title">종목별 한도 현황</div>
+        <div class="sort-row">
+          <span style="font-size:11px;color:var(--text2);">정렬:</span>
+          <button class="sort-btn active" onclick="r_sort('used',this)">사용액 순</button>
+          <button class="sort-btn" onclick="r_sort('remain',this)">잔여 순</button>
+          <button class="sort-btn" onclick="r_sort('rate',this)">소진율 순</button>
+          <button class="sort-btn" onclick="r_sort('pnl',this)">손익률 순</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead><tr>
+              <th>종목명</th><th class="r">종목 한도</th><th class="r">사용 한도</th>
+              <th class="r">잔여 한도</th><th>소진율</th><th class="r">평균 손익률</th>
+              <th class="r">이용 고객</th><th>상태</th>
+            </tr></thead>
+            <tbody id="r-tBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== PAGE: 설정 ===================== -->
+    <div id="page-settings" class="page">
+      <div class="page-header">
+        <div class="page-title">설정</div>
+        <div class="page-desc">심사 결과값에 직접 영향을 주는 파라미터를 관리합니다.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">심사 파라미터 설정</div>
+        <div class="grid4" style="margin-bottom:10px;">
+          <div class="field"><label>승인 점수 기준</label><input type="number" id="cfg-approve" min="0" max="100" step="1" /></div>
+          <div class="field"><label>조건부 점수 기준</label><input type="number" id="cfg-partial" min="0" max="100" step="1" /></div>
+          <div class="field"><label>기본 가산금리 (%)</label><input type="number" id="cfg-baseSpread" step="0.01" /></div>
+          <div class="field"><label>기준금리(CD91) 기본값 (%)</label><input type="number" id="cfg-baseCd" step="0.01" /></div>
+        </div>
+        <div class="grid4" style="margin-bottom:10px;">
+          <div class="field"><label>레버리지 가산 시작(%)</label><input type="number" id="cfg-levWarn" min="0" max="100" step="1" /></div>
+          <div class="field"><label>고레버리지 가산 시작(%)</label><input type="number" id="cfg-levHigh" min="0" max="100" step="1" /></div>
+          <div class="field"><label>레버리지 가산(보통, %)</label><input type="number" id="cfg-levAddWarn" step="0.01" /></div>
+          <div class="field"><label>레버리지 가산(고위험, %)</label><input type="number" id="cfg-levAddHigh" step="0.01" /></div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-primary" onclick="cfg_apply()">설정 저장</button>
+          <span id="cfg-msg" style="font-size:12px;color:var(--text2);align-self:center;"></span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="./customer-data.js"></script>
+<script src="./screening-settings.js"></script>
+<script>
+// ── 데이터 ──
+const COMP_LIMIT = 10000000000;
+const STOCKS = [
+  {s:'엔켐',used:620000000,cust:1,pnl:.140},{s:'기아',used:600000000,cust:2,pnl:.095},
+  {s:'셀트리온',used:500000000,cust:1,pnl:.056},{s:'삼성물산',used:500000000,cust:1,pnl:.033},
+  {s:'SK',used:500000000,cust:1,pnl:-.054},{s:'포스코퓨처엠',used:450000000,cust:1,pnl:-.113},
+  {s:'메리츠금융지주',used:400000000,cust:1,pnl:.181},{s:'현대차',used:300000000,cust:1,pnl:.064},
+  {s:'에코프로비엠',used:250000000,cust:1,pnl:-.058},{s:'한화에어로스페이스',used:150000000,cust:1,pnl:.098},
+  {s:'HLB',used:120000000,cust:1,pnl:.105},{s:'HPSP',used:20000000,cust:1,pnl:-.077},
+  {s:'삼성카드',used:8000000,cust:1,pnl:.105},{s:'삼성중공업',used:5000000,cust:1,pnl:.082},
+  {s:'카카오페이',used:1500000,cust:1,pnl:-.079},{s:'현대로템',used:1000000,cust:1,pnl:.086},
+];
+const LIM = {};
+STOCKS.forEach(s => { LIM[s.s] = Math.ceil(s.used * 2.5 / 1e8) * 1e8; });
+const TOTAL_USED = STOCKS.reduce((a,s) => a + s.used, 0);
+
+const DB = window.CUSTOMER_DB || {};
+const SETTINGS = window.SCREENING_SETTINGS || {
+  approveScore: 80,
+  partialScore: 40,
+  baseSpread: 1.5,
+  baseCd: 3.5,
+  levWarn: 40,
+  levHigh: 60,
+  levAddWarn: 0.4,
+  levAddHigh: 0.8
+};
+
+// ── 유틸 ──
+function f(n) { if(n>=1e8) return (n/1e8).toFixed(1)+'억'; if(n>=1e4) return Math.round(n/1e4)+'만'; return n.toLocaleString(); }
+function fp(r) { return (r>=0?'+':'')+(r*100).toFixed(1)+'%'; }
+function $(id) { return document.getElementById(id); }
+
+// ── 네비게이션 ──
+function goPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  $('page-'+name).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── 심사 로직 ──
+function computeScreening(d, reqAmt, opts) {
+  const { mkt, eli, surge, exp, fc, prem, cd } = opts;
+  if (!eli) return { verdict:'reject', sc:0, app:0, max:0, rate:0,
+    factors:[{n:'종목 자격',v:'불가',s:-100}], reasons:['대출 불가 종목입니다.'] };
+  let sc=0, factors=[];
+  const lev = d.net_asset>0 ? (d.loan_balance/d.net_asset*100) : 0;
+  const ltv = d.net_asset>0 ? (reqAmt/d.net_asset*100) : 999;
+  let a = d.net_asset>=1e9?25:d.net_asset>=5e8?20:d.net_asset>=1e8?14:d.net_asset>=5e7?8:d.net_asset>=1e7?3:0;
+  sc+=a; factors.push({n:'순자산 규모', v:f(d.net_asset), s:a});
+  let b = ltv<=15?18:ltv<=30?13:ltv<=45?7:ltv<=60?2:-6;
+  sc+=b; factors.push({n:'신청 LTV', v:ltv.toFixed(1)+'%', s:b});
+  let c = lev<=20?12:lev<=35?8:lev<=50?3:lev<=65?-4:-12;
+  sc+=c; factors.push({n:'기존 레버리지', v:lev.toFixed(1)+'%', s:c});
+  let e = fc===0?8:fc===1?-5:-18;
+  sc+=e; factors.push({n:'반대매매 이력', v:['없음','1회','2회+'][fc], s:e});
+  let g = prem===2?6:prem===1?3:0;
+  sc+=g; factors.push({n:'고객 등급', v:['일반','우수','VIP'][prem], s:g});
+  let h = mkt===3?5:mkt===2?2:-3;
+  if(surge)h-=8; if(exp===1)h-=4; if(exp===2)h-=13;
+  sc+=h; factors.push({n:'종목 리스크', v:(['소형','중형','대형'][mkt-1]||'소형')+'주'+(surge?' ·급등':'')+(exp>0?' ·익스포저':''), s:h});
+  sc = Math.max(0, Math.min(100, sc));
+  const approveCut = SETTINGS.approveScore;
+  const partialCut = SETTINGS.partialScore;
+  const midCut = Math.min(100, Math.round((approveCut + partialCut) / 2));
+  const app = sc>=approveCut?reqAmt:sc>=midCut?Math.floor(reqAmt*.8):sc>=partialCut?Math.floor(reqAmt*.5):0;
+  const maxAmt = Math.min(d.net_asset*.5, sc>=approveCut?reqAmt*1.2:sc>=midCut?reqAmt:sc>=partialCut?reqAmt*.8:0);
+  const verdict = sc>=approveCut?'approve':sc>=partialCut?'partial':'reject';
+  const rPrem = prem===2?-.5:prem===1?-.3:0;
+  const rRisk = sc>=approveCut?0:sc>=midCut?.4:sc>=partialCut?1.1:2.5;
+  const rLev = lev>=SETTINGS.levHigh?SETTINGS.levAddHigh:lev>=SETTINGS.levWarn?SETTINGS.levAddWarn:0;
+  const rate = Math.max(0, cd+SETTINGS.baseSpread+rPrem+rRisk+rLev);
+  const reasons = [];
+  if(lev>50) reasons.push('레버리지 '+lev.toFixed(1)+'% — 추가 대출 리스크 높음');
+  if(fc>=1) reasons.push('반대매매 이력 있음');
+  if(surge) reasons.push('신청 종목 최근 급등');
+  if(sc>=80) reasons.push('전반적 지표 양호 — 전액 승인 가능');
+  else if(sc>=40) reasons.push('일부 리스크 요인 — 부분 승인');
+  else reasons.push('복합 리스크 — 현재 승인 불가');
+  return { verdict, sc, app, max:Math.floor(maxAmt), rate, factors, reasons,
+    rbase:cd, rspread:SETTINGS.baseSpread, rprem:rPrem, rrisk:rRisk, rlev:rLev, lev };
+}
+
+function renderResult(prefix, result, reqAmt) {
+  const { verdict, sc, app, max, rate, factors, reasons } = result;
+  $(prefix+'vPill').className = 'verdict verdict-'+verdict;
+  $(prefix+'vPill').textContent = {approve:'✓ 승인', partial:'~ 조건부 승인', reject:'✕ 신용 거부'}[verdict];
+  $(prefix+'vSub').textContent = {approve:'요청 조건으로 대출 가능합니다.', partial:'조건 조정 후 일부 승인 가능합니다.', reject:'현재 기준으로 승인이 어렵습니다.'}[verdict];
+  $(prefix+'rReq').textContent = f(reqAmt);
+  $(prefix+'rApp').textContent = app>0 ? f(app) : '-';
+  $(prefix+'rMax').textContent = max>0 ? f(max) : '-';
+  $(prefix+'rRate').textContent = rate ? rate.toFixed(2)+'%' : '-';
+  if ($(prefix+'score')) {
+    $(prefix+'score').textContent = sc + ' / 100';
+    const bar = $(prefix+'scoreBar');
+    bar.style.width = sc+'%';
+    bar.style.background = sc>=80?'#3fcb7a':sc>=60?'#f5a623':sc>=40?'#e07030':'#f55858';
+    // 한도 바
+    const total = Math.max(reqAmt, max, 1);
+    const aw = Math.round(app/total*100);
+    const cw = Math.round((max-app)/total*100);
+    const rw = 100-aw-cw;
+    $(prefix+'limitBar').innerHTML =
+      `<div style="flex:${aw};background:#3fcb7a;min-width:${aw>0?'3px':'0'};border-radius:999px;"></div>`+
+      `<div style="flex:${Math.max(0,cw)};background:#4b8ef5;min-width:${cw>0?'3px':'0'};border-radius:999px;"></div>`+
+      `<div style="flex:${Math.max(0,rw)};background:#f55858;min-width:${rw>0?'3px':'0'};border-radius:999px;"></div>`;
+    $(prefix+'barLbl').textContent = f(app)+' 승인 / '+f(max)+' 최대';
+    // 요인
+    $(prefix+'factors').innerHTML = factors.map(fac => {
+      const c = fac.s>5?'#3fcb7a':fac.s>0?'#6bcf96':fac.s===0?'#8b91a3':fac.s>-5?'#f5a623':'#f55858';
+      return `<div class="factor-row"><span style="color:var(--text2);">${fac.n}</span><span style="font-weight:500;font-size:12px;"><span style="color:${c};margin-right:5px;">${fac.s>0?'+':''}${fac.s}</span>${fac.v}</span></div>`;
+    }).join('');
+    // 금리
+    $('r-base').textContent = result.rbase.toFixed(2)+'%';
+    $('r-spread').textContent = '+'+result.rspread.toFixed(2)+'%';
+    $('r-premRow').style.display = result.rprem<0?'flex':'none';
+    $('r-prem').textContent = result.rprem.toFixed(2)+'%';
+    $('r-riskRow').style.display = result.rrisk>0?'flex':'none';
+    $('r-risk').textContent = '+'+result.rrisk.toFixed(2)+'%';
+    $('r-levRow').style.display = result.rlev>0?'flex':'none';
+    $('r-lev').textContent = '+'+result.rlev.toFixed(2)+'%';
+    $('r-final').textContent = rate.toFixed(2)+'%';
+    // 의견
+    $(prefix+'reasons').innerHTML = reasons.map(r => `<p style="font-size:12px;color:var(--text2);padding:4px 0 4px 12px;position:relative;border-bottom:1px solid var(--border);"><span style="position:absolute;left:2px;color:var(--blue);">·</span>${r}</p>`).join('');
+  } else {
+    // 한도상향 페이지용 (간략)
+  }
+}
+
+// ── PAGE 1: 심사 ──
+function s_loadCust() {
+  const id = $('s-custSel').value;
+  if (!id) {
+    $('s-profInline').classList.add('hidden');
+    $('s-custSummary').classList.add('hidden');
+    $('s-holdWrap').classList.add('hidden');
+    $('s-inputCard').style.display='none';
+    return;
+  }
+  const d = DB[id];
+  const cashCount = s_makeCashHoldings(id).length;
+  $('s-profInline').classList.remove('hidden');
+  $('s-ava').textContent = id.replace('고객_','');
+  $('s-pName').textContent = id;
+  $('s-pMeta').textContent = '현금 '+cashCount+'종목 · 신용공여 '+d.credit_holdings.length+'종목 · 순자산 '+f(d.net_asset);
+  $('s-asset').textContent = f(d.net_asset);
+  $('s-loan').textContent = d.loan_balance>0?f(d.loan_balance):'없음';
+  $('s-lev').textContent = d.net_asset>0?(d.loan_balance/d.net_asset*100).toFixed(1)+'%':'-';
+  $('s-custSummary').classList.remove('hidden');
+  $('s-holdWrap').classList.remove('hidden');
+  $('s-btnCash').classList.add('active');
+  $('s-btnCredit').classList.remove('active');
+  s_renderHoldings(id, 'cash');
+  s_renderStockPicker(id);
+  $('s-inputCard').style.display = 'block';
+  $('s-resultCard').classList.add('hidden');
+}
+
+function s_makeCashHoldings(id) {
+  const d = DB[id];
+  const creditSet = new Set((d.credit_holdings || []).map(h => h.stock));
+  const cashCandidates = STOCKS.filter(s => !creditSet.has(s.s)).slice(0, 3);
+  const baseAsset = Math.max(d.net_asset * 0.45, 1000000);
+  return cashCandidates.map((s, idx) => {
+    const ratio = 0.2 + idx * 0.12;
+    const evalAmt = Math.floor(baseAsset * ratio);
+    const avgPrice = 45000 + idx * 18000 + parseInt(id.replace('고객_',''), 10) * 1300;
+    const qty = Math.max(1, Math.floor(evalAmt / avgPrice));
+    return { stock: s.s, qty, avgPrice, evalAmt, pnl: s.pnl };
+  });
+}
+
+function s_makeCreditHoldings(id) {
+  const d = DB[id];
+  const balance = d.loan_balance || 0;
+  const holdings = d.credit_holdings || [];
+  if (!holdings.length) return [];
+  const per = Math.floor(balance / holdings.length);
+  return holdings.map((h, idx) => {
+    const stockInfo = STOCKS.find(s => s.s === h.stock);
+    const evalAmt = idx === holdings.length - 1 ? balance - per * idx : per;
+    const avgPrice = 38000 + idx * 12000 + parseInt(id.replace('고객_',''), 10) * 900;
+    const qty = avgPrice > 0 ? Math.max(1, Math.floor(Math.max(evalAmt, 100000) / avgPrice)) : 0;
+    return { stock: h.stock, qty, avgPrice, evalAmt: Math.max(evalAmt, 0), pnl: stockInfo ? stockInfo.pnl : 0 };
+  });
+}
+
+function s_renderHoldings(id, type) {
+  const body = $('s-holdBody');
+  const rows = type === 'cash' ? s_makeCashHoldings(id) : s_makeCreditHoldings(id);
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:12px;">표시할 ${type === 'cash' ? '현금주식잔고' : '신용공여잔고'}가 없습니다.</td></tr>`;
+    return;
+  }
+  body.innerHTML = rows.map(r => {
+    const pnlColor = r.pnl >= 0 ? '#3fcb7a' : '#f55858';
+    const review = s_getReviewStatus(r.stock);
+    const reviewBadge = review === '심사가능'
+      ? '<span class="badge badge-green">심사가능</span>'
+      : '<span class="badge badge-red">심사불가능</span>';
+    return `<tr>
+      <td style="font-weight:600;">${r.stock}</td>
+      <td class="r mono">${r.qty.toLocaleString()}주</td>
+      <td class="r mono">${f(r.avgPrice)}</td>
+      <td class="r mono">${f(r.evalAmt)}</td>
+      <td class="r mono" style="color:${pnlColor};">${fp(r.pnl)}</td>
+      <td>${reviewBadge}</td>
+    </tr>`;
+  }).join('');
+}
+
+function s_getReviewStatus(stockName) {
+  // 임시 규칙: 추후 종목별 심사가능 여부 데이터로 교체 예정
+  const blockedStocks = new Set(['카카오페이', '포스코퓨처엠', '에코프로비엠']);
+  return blockedStocks.has(stockName) ? '심사불가능' : '심사가능';
+}
+
+function s_switchHoldType(type, btn) {
+  const id = $('s-custSel').value;
+  if (!id) return;
+  document.querySelectorAll('.hold-toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  s_renderHoldings(id, type);
+}
+
+function s_collectStockOptions(id) {
+  const cash = s_makeCashHoldings(id).map(r => r.stock);
+  const credit = s_makeCreditHoldings(id).map(r => r.stock);
+  return [...new Set([...cash, ...credit])];
+}
+
+function s_setSelectedStock(stock) {
+  $('s-stock').value = stock || '';
+  s_updateStockEligibility();
+}
+
+function s_renderStockPicker(id) {
+  const sel = $('s-stockSel');
+  const stocks = s_collectStockOptions(id);
+  sel.innerHTML = `<option value="">종목 선택...</option>` +
+    stocks.map(stock => `<option value="${stock}">${stock}</option>`).join('') +
+    `<option value="__manual__">보유외 종목 직접 입력</option>`;
+  sel.value = '';
+  $('s-stockCustom').value = '';
+  $('s-stockCustomWrap').classList.add('hidden');
+  $('s-stockCustom').disabled = true;
+  s_setSelectedStock('');
+}
+
+function s_onStockSelectionChange() {
+  const v = $('s-stockSel').value;
+  const customInput = $('s-stockCustom');
+  const customWrap = $('s-stockCustomWrap');
+  if (v === '__manual__') {
+    customWrap.classList.remove('hidden');
+    customInput.disabled = false;
+    customInput.focus();
+    s_setSelectedStock(customInput.value.trim());
+    return;
+  }
+  customWrap.classList.add('hidden');
+  customInput.disabled = true;
+  customInput.value = '';
+  s_setSelectedStock(v);
+}
+
+function s_onCustomStockInput() {
+  if ($('s-stockSel').value !== '__manual__') return;
+  s_setSelectedStock($('s-stockCustom').value.trim());
+}
+
+function s_updateStockEligibility() {
+  const stock = $('s-stock').value.trim();
+  const isBlocked = stock && s_getReviewStatus(stock) === '심사불가능';
+  $('s-stockWarn').classList.toggle('hidden', !isBlocked);
+  $('s-runBtn').disabled = !!isBlocked;
+  $('s-runBtn').style.opacity = isBlocked ? '0.6' : '1';
+  $('s-runBtn').style.cursor = isBlocked ? 'not-allowed' : 'pointer';
+}
+
+function s_run() {
+  const id = $('s-custSel').value;
+  if (!id) { alert('고객을 선택해주세요.'); return; }
+  if ($('s-stockSel').value === '__manual__') {
+    s_setSelectedStock($('s-stockCustom').value.trim());
+  }
+  const stock = $('s-stock').value.trim();
+  if (!stock) { alert('신청 종목명을 선택하거나 직접 입력해주세요.'); return; }
+  if (s_getReviewStatus(stock) === '심사불가능') {
+    alert('해당 종목은 심사불가능으로 신청할 수 없습니다.');
+    return;
+  }
+  const amt = parseFloat($('s-amt').value)||0;
+  if (!amt) { alert('신청 금액을 입력해주세요.'); return; }
+  $('s-loading').classList.remove('hidden');
+  $('s-resultCard').classList.add('hidden');
+  setTimeout(() => {
+    $('s-loading').classList.add('hidden');
+    const result = computeScreening(DB[id], amt, {
+      mkt: 3,
+      eli: 1,
+      surge: 0,
+      exp: 0,
+      fc: 0,
+      prem: 0,
+      cd: SETTINGS.baseCd
+    });
+    renderResult('s-', result, amt);
+    $('s-resultCard').classList.remove('hidden');
+  }, 700);
+}
+function s_reset() {
+  $('s-custSel').value='';
+  $('s-stock').value='';
+  $('s-stockSel').value='';
+  $('s-stockCustom').value='';
+  $('s-stockCustomWrap').classList.add('hidden');
+  $('s-stockCustom').disabled=true;
+  $('s-stockWarn').classList.add('hidden');
+  $('s-runBtn').disabled = false;
+  $('s-runBtn').style.opacity = '1';
+  $('s-runBtn').style.cursor = 'pointer';
+  s_loadCust();
+}
+
+function cfg_loadToUi() {
+  $('cfg-approve').value = SETTINGS.approveScore;
+  $('cfg-partial').value = SETTINGS.partialScore;
+  $('cfg-baseSpread').value = SETTINGS.baseSpread;
+  $('cfg-baseCd').value = SETTINGS.baseCd;
+  $('cfg-levWarn').value = SETTINGS.levWarn;
+  $('cfg-levHigh').value = SETTINGS.levHigh;
+  $('cfg-levAddWarn').value = SETTINGS.levAddWarn;
+  $('cfg-levAddHigh').value = SETTINGS.levAddHigh;
+}
+
+function cfg_apply() {
+  const approve = parseFloat($('cfg-approve').value);
+  const partial = parseFloat($('cfg-partial').value);
+  if (Number.isNaN(approve) || Number.isNaN(partial) || partial >= approve) {
+    $('cfg-msg').textContent = '조건부 점수 기준은 승인 점수 기준보다 작아야 합니다.';
+    $('cfg-msg').style.color = 'var(--red)';
+    return;
+  }
+  SETTINGS.approveScore = Math.max(0, Math.min(100, approve));
+  SETTINGS.partialScore = Math.max(0, Math.min(100, partial));
+  SETTINGS.baseSpread = parseFloat($('cfg-baseSpread').value) || 0;
+  SETTINGS.baseCd = parseFloat($('cfg-baseCd').value) || 0;
+  SETTINGS.levWarn = parseFloat($('cfg-levWarn').value) || 0;
+  SETTINGS.levHigh = parseFloat($('cfg-levHigh').value) || 0;
+  SETTINGS.levAddWarn = parseFloat($('cfg-levAddWarn').value) || 0;
+  SETTINGS.levAddHigh = parseFloat($('cfg-levAddHigh').value) || 0;
+  $('cfg-msg').textContent = '설정이 저장되었습니다. 다음 심사부터 즉시 반영됩니다.';
+  $('cfg-msg').style.color = 'var(--green)';
+}
+
+// ── PAGE 2: 한도상향 ──
+let l_histData = [];
+
+function l_loadCust() {
+  const id = $('l-custSel').value;
+  if (!id) { $('l-profInline').classList.add('hidden'); $('l-custSummary').classList.add('hidden'); return; }
+  const d = DB[id];
+  $('l-profInline').classList.remove('hidden');
+  $('l-ava').textContent = id.replace('고객_','');
+  $('l-pName').textContent = id;
+  $('l-pMeta').textContent = '신용공여 '+d.credit_holdings.length+'종목 · 순자산 '+f(d.net_asset);
+  $('l-asset').textContent = f(d.net_asset);
+  $('l-loan').textContent = d.loan_balance>0?f(d.loan_balance):'없음';
+  $('l-lev').textContent = d.net_asset>0?(d.loan_balance/d.net_asset*100).toFixed(1)+'%':'-';
+  $('l-custSummary').classList.remove('hidden');
+  $('l-resultCard').classList.add('hidden');
+  $('l-bannerGreen').classList.add('hidden');
+  $('l-bannerAmber').classList.add('hidden');
+}
+function l_run() {
+  const id = $('l-custSel').value;
+  if (!id) { alert('고객을 선택해주세요.'); return; }
+  const amt = parseFloat($('l-amt').value)||0;
+  if (!amt) { alert('신청 금액을 입력해주세요.'); return; }
+  $('l-loading').classList.remove('hidden');
+  $('l-resultCard').classList.add('hidden');
+  setTimeout(() => {
+    $('l-loading').classList.add('hidden');
+    const stockName = $('l-stock').value.trim();
+    const result = computeScreening(DB[id], amt, {
+      mkt: parseInt($('l-mkt').value)||3,
+      eli: parseInt($('l-eli').value)||1,
+      surge: parseInt($('l-surge').value)||0,
+      exp: parseInt($('l-exp').value)||0,
+      fc: parseInt($('l-fc').value)||0,
+      prem: parseInt($('l-prem').value)||0,
+      cd: 3.5
+    });
+    $('l-vPill').className = 'verdict verdict-'+result.verdict;
+    $('l-vPill').textContent = {approve:'✓ 승인', partial:'~ 조건부', reject:'✕ 거부'}[result.verdict];
+    $('l-vSub').textContent = {approve:'전액 승인 가능', partial:'일부 승인', reject:'승인 불가'}[result.verdict];
+    $('l-rReq').textContent = f(amt);
+    $('l-rApp').textContent = result.app>0?f(result.app):'-';
+    $('l-rMax').textContent = result.max>0?f(result.max):'-';
+    $('l-rRate').textContent = result.rate?result.rate.toFixed(2)+'%':'-';
+    $('l-resultCard').classList.remove('hidden');
+    // 자동 연동
+    l_autoFill(stockName, amt);
+  }, 700);
+}
+function l_autoFill(stockName, reqAmt) {
+  $('l-bannerGreen').classList.add('hidden');
+  $('l-bannerAmber').classList.add('hidden');
+  const stockData = STOCKS.find(s => s.s === stockName);
+  const sel = $('f-stock');
+  if (stockName && stockData) {
+    sel.value = stockName;
+    f_onStockChange();
+    const rem = LIM[stockName] - stockData.used;
+    if (rem < reqAmt) {
+      $('l-bannerAmber').classList.remove('hidden');
+      $('l-warnText').textContent = `'${stockName}' 잔여한도 ${f(rem)} — 신청금액 ${f(reqAmt)} 부족. 한도상향 신청 폼이 자동으로 채워졌습니다.`;
+      const suggested = Math.ceil((LIM[stockName]+reqAmt)/1e8)*1e8;
+      $('f-new').value = (suggested/1e8).toFixed(1);
+      $('f-reason').value = '고객 수요 증가';
+    } else {
+      $('l-bannerGreen').classList.remove('hidden');
+      $('l-bannerTitle').textContent = "'"+stockName+"' 한도상향 신청 폼 자동 입력 완료";
+      $('l-bannerSub').textContent = '종목 현황이 아래 신청 폼에 반영되었습니다.';
+    }
+  } else if (stockName && !stockData) {
+    $('l-bannerGreen').classList.remove('hidden');
+    $('l-bannerTitle').textContent = "'"+stockName+"' 신규 종목 — 한도 설정 필요";
+    $('l-bannerSub').textContent = '당사에 한도가 설정되지 않은 종목입니다. 아래에서 신규 한도를 신청해주세요.';
+  }
+}
+function f_onStockChange() {
+  const v = $('f-stock').value.trim();
+  if (!v) { ['f-cur','f-used','f-rem'].forEach(id => $(id).value=''); return; }
+  const lim = LIM[v]||0;
+  const used = (STOCKS.find(s=>s.s===v)||{used:0}).used;
+  $('f-cur').value = (lim/1e8).toFixed(1);
+  $('f-used').value = (used/1e8).toFixed(1);
+  $('f-rem').value = ((lim-used)/1e8).toFixed(1);
+}
+function f_submit() {
+  const stock = $('f-stock').value.trim();
+  const nl = parseFloat($('f-new').value);
+  const reason = $('f-reason').value;
+  const note = $('f-note').value;
+  if (!stock) { alert('종목을 선택해주세요.'); return; }
+  if (!nl||nl<=0) { alert('심사 신청 한도를 입력해주세요.'); return; }
+  const cl = (LIM[stock]||0)/1e8;
+  if (nl<=cl) { alert('신청 한도가 현재 종목 한도 이하입니다.'); return; }
+  l_histData.unshift({stock, cl, nl, diff:(nl-cl).toFixed(1), reason, note,
+    date: new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})});
+  l_renderHist();
+  f_clear();
+  $('l-bannerGreen').classList.add('hidden');
+  $('l-bannerAmber').classList.add('hidden');
+  $('l-histCard').classList.remove('hidden');
+}
+function l_renderHist() {
+  $('l-histList').innerHTML = l_histData.map((r,i) => `
+    <div class="hist-item">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+          <span style="font-weight:600;font-size:13px;">${r.stock}</span>
+          <span class="badge badge-blue">검토중</span>
+        </div>
+        <div style="font-size:11px;color:var(--text2);">${r.cl}억 → <strong style="color:var(--blue);">${r.nl}억</strong> (+${r.diff}억) · ${r.reason} · ${r.date}</div>
+        ${r.note?`<div style="font-size:10px;color:var(--text3);margin-top:2px;">${r.note}</div>`:''}
+      </div>
+      <button onclick="l_cancelH(${i})" style="font-size:11px;padding:3px 10px;border:1px solid var(--border2);border-radius:999px;background:transparent;cursor:pointer;color:var(--text2);font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">취소</button>
+    </div>`).join('');
+}
+function l_cancelH(i) { l_histData.splice(i,1); l_renderHist(); if(!l_histData.length) $('l-histCard').classList.add('hidden'); }
+function f_clear() { $('f-stock').value=''; ['f-cur','f-used','f-rem','f-new'].forEach(id=>$(id).value=''); $('f-note').value=''; }
+
+// ── PAGE 3: 잔여한도 ──
+function r_init() {
+  const rem = COMP_LIMIT - TOTAL_USED;
+  const rate = TOTAL_USED/COMP_LIMIT*100;
+  $('r-tLim').textContent = f(COMP_LIMIT);
+  $('r-tUsed').textContent = f(TOTAL_USED);
+  $('r-tRem').textContent = f(rem);
+  $('r-tRate').textContent = rate.toFixed(1)+'%';
+  const gf = $('r-gFill');
+  gf.style.width = rate+'%';
+  gf.style.background = rate>=80?'#f55858':rate>=60?'#f5a623':'#4b8ef5';
+  $('r-gLbl').textContent = f(TOTAL_USED)+' / '+f(COMP_LIMIT);
+  $('r-gMax').textContent = f(COMP_LIMIT);
+  const tl = Object.values(LIM).reduce((a,v)=>a+v,0);
+  $('r-stk').textContent = STOCKS.length;
+  $('r-usd').textContent = (TOTAL_USED/1e8).toFixed(1);
+  $('r-rm').textContent = ((tl-TOTAL_USED)/1e8).toFixed(1);
+  $('r-safe').textContent = STOCKS.filter(s=>(s.used/LIM[s.s])<0.5).length;
+  r_renderTable('used');
+}
+function r_renderTable(sort) {
+  const data = [...STOCKS].sort((a,b) => {
+    if(sort==='used') return b.used-a.used;
+    if(sort==='remain') return (LIM[b.s]-b.used)-(LIM[a.s]-a.used);
+    if(sort==='rate') return (b.used/LIM[b.s])-(a.used/LIM[a.s]);
+    if(sort==='pnl') return b.pnl-a.pnl;
+    return 0;
+  });
+  const tb = $('r-tBody');
+  tb.innerHTML = data.map(s => {
+    const lim=LIM[s.s], rem=lim-s.used, rt=(s.used/lim*100);
+    const bc = rt>=80?'#f55858':rt>=60?'#f5a623':'#4b8ef5';
+    const st = rt>=80?'<span class="badge badge-red">한도임박</span>':rt>=60?'<span class="badge badge-amber">주의</span>':'<span class="badge badge-green">여유</span>';
+    const pc = s.pnl>=0?'#3fcb7a':'#f55858';
+    return `<tr><td style="font-weight:600;">${s.s}</td><td class="r mono">${f(lim)}</td><td class="r mono" style="color:#4b8ef5;">${f(s.used)}</td><td class="r mono" style="color:#3fcb7a;">${f(rem)}</td><td><span class="mini-bar-bg"><span class="mini-bar-fill" style="width:${Math.min(rt,100).toFixed(0)}%;background:${bc};display:block;height:100%;border-radius:999px;"></span></span> <span style="font-size:11px;color:var(--text2);margin-left:4px;">${rt.toFixed(0)}%</span></td><td class="r mono" style="color:${pc};">${fp(s.pnl)}</td><td class="r">${s.cust}명</td><td>${st}</td></tr>`;
+  }).join('');
+  const tl=Object.values(LIM).reduce((a,v)=>a+v,0), tu=STOCKS.reduce((a,s)=>a+s.used,0);
+  tb.innerHTML += `<tr style="border-top:1px solid var(--border2);font-weight:700;background:var(--bg3);"><td>합계</td><td class="r mono">${f(tl)}</td><td class="r mono" style="color:#4b8ef5;">${f(tu)}</td><td class="r mono" style="color:#3fcb7a;">${f(tl-tu)}</td><td><span style="font-size:11px;color:var(--text2);">${(tu/tl*100).toFixed(1)}%</span></td><td class="r">-</td><td class="r">${STOCKS.reduce((a,s)=>a+s.cust,0)}명</td><td></td></tr>`;
+}
+function r_sort(k, btn) {
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  r_renderTable(k);
+}
+
+// ── 초기화 ──
+function init() {
+  // 고객 셀렉트 채우기
+  ['s-custSel'].forEach(selId => {
+    const sel = $(selId);
+    if (!sel) return;
+    for (let i=1; i<=20; i++) {
+      const id = '고객_'+String(i).padStart(2,'0');
+      const o = document.createElement('option');
+      o.value = id; o.textContent = id+' (순자산 '+f(DB[id].net_asset)+')';
+      sel.appendChild(o);
+    }
+  });
+  // 한도상향 종목 셀렉트
+  const fSel = $('f-stockList');
+  [...STOCKS].sort((a,b)=>b.used-a.used).forEach(s => {
+    const o = document.createElement('option');
+    o.value=s.s; fSel.appendChild(o);
+  });
+  cfg_loadToUi();
+  r_init();
+}
+init();
+</script>
+</body>
+</html>
